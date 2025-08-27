@@ -1,0 +1,24 @@
+#plot
+library(Cairo)
+burn_in <- 0
+
+savegraph <- paste0('results/', format(Sys.time(), "%d-%H-%M-%S"),'.png')
+CairoPNG(savegraph, width=1200, height=300 * length(results))
+par(mfrow=c(length(results), 3)) 
+for (i in 1:length(results)){
+  mc_samples <- results[[i]]$out
+  plot(mc_samples[burn_in:n_iter,1], type="l", ylab="sigma")
+  plot(mc_samples[burn_in:n_iter,2], type="l", ylab="lam0")
+  plot(mc_samples[burn_in:n_iter,3], type="l", ylab="N", ylim = c(0, 500))
+}
+dev.off()
+
+
+#density plot
+savegraph <- paste0('results/', format(Sys.time(), "%d-%H-%M-%S"),'density.png')
+CairoPNG(savegraph)
+par(mfrow=c(2,2))
+plot(density(results[[1]]$out[10001:1000000,1]), xlab="sigma", main="")
+plot(density(results[[1]]$out[10001:1000000,2]), xlab="lam0", main="")
+hist(results[[1]]$out[10001:1000000,3], xlab="N", freq=FALSE, main="")
+dev.off()

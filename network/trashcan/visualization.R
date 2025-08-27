@@ -1,0 +1,57 @@
+load('sbm.RData')
+source('latent_modeling.R')
+
+
+# 시각화.
+library(sf)
+library(ggplot2)
+library(readxl)
+library(dplyr)
+library(purrr)
+# 지도 데이터
+shp_data <- 'gadm/gadm41_KOR_2.shp'
+map_sf <- st_read(shp_data, quiet = TRUE)
+
+# 행정구역별 위경도
+file_path <- '행정구역별_위경도_좌표.xlsx'
+sheet_names <- excel_sheets(file_path)
+city_temp <- map_dfr(sheet_names, ~ read_excel(file_path, sheet = .x) %>% 
+                       mutate(sheet = .x))
+
+city_temp[city_temp$시도 == '강원도',]$시도 <- '강원특별자치도'
+city_temp[city_temp$시도 == '전라북도',]$시도 <- '전북특별자치도'
+
+city_temp <- city_temp %>% mutate(node = paste(시도, 시군구)) %>% distinct(node, .keep_all = TRUE)
+city_temp[city_temp$node == '서울특별시 NA',]$node <- '서울특별시'
+city_temp[city_temp$node == '인천광역시 NA',]$node <- '인천광역시'
+city_temp[city_temp$node == '부산광역시 NA',]$node <- '부산광역시'
+city_temp[city_temp$node == '대구광역시 NA',]$node <- '대구광역시'
+city_temp[city_temp$node == '대전광역시 NA',]$node <- '대전광역시'
+city_temp[city_temp$node == '광주광역시 NA',]$node <- '광주광역시'
+city_temp[city_temp$node == '울산광역시 NA',]$node <- '울산광역시'
+city_temp[city_temp$node == '세종특별자치시 NA',]$node <- '세종특별자치시'
+city_temp
+
+location <- city_temp %>% select('위도', '경도', 'node')
+location
+
+
+#join membership and location
+membership_df <- data.frame(memberships)
+colnames(membership_df) = c('node', 'membership', 'dcsbm' ,'sbm')
+membership_location <- left_join(membership_df, location, by = 'node')
+
+membership_location$name <- unlist(lapply(strsplit(membership_location$node, ' '), function(x){return(x[length(x)])}))
+
+membership_location
+
+ggplot(map_sf) + 
+  geom_sf(fill = 'lightgray', color = 'darkblue', size = 0.2)+
+  geom_point(data = membership_location, mapping = aes(x = 경도, y = 위도, color = dcsbm))+
+  geom_text(data = membership_location, 
+            mapping = aes(x = 경도, y = 위도, label = name), 
+            size = 2.5, vjust = -0.5) +  # vjust는 텍스트 위치 조정
+  theme_minimal()
+
+
+       

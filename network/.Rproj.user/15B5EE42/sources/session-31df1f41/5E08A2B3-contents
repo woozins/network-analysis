@@ -1,0 +1,41 @@
+
+# 시각화.
+library(ggplot2)
+library(readxl)
+library(dplyr)
+library(purrr)
+# 지도 데이터
+shp_data <- 'gadm/gadm41_KOR_2.shp'
+seoul_shp <- 'tl_emd._seoul_4326.shp'
+map_sf <- st_read(shp_data, quiet = TRUE)
+seoul_sf <-  st_read(seoul_shp, quiet = TRUE)
+
+# 행정구역별 위경도
+file_path <- '행정구역별_위경도_좌표.xlsx'
+seoul_coord <- read_excel(file_path, sheet = '서울특별시') 
+seoul_coord
+
+seoul_coord <- seoul_coord %>% mutate(node = paste(시도, 시군구)) %>% distinct(node, .keep_all = TRUE)
+seoul_coord
+
+location <- seoul_coord %>% select('위도', '경도', '시군구')
+location
+
+
+#join membership and location
+membership_df <- data.frame(memberships)
+membership_df
+colnames(membership_df) = c('시군구', 'group_24')
+membership_location <- left_join(membership_df, location, by = '시군구')
+membership_location
+
+savegraph <- paste0('plots/membership', format(Sys.time(), "%d-%H-%M-%S"),'.png')
+CairoPNG(savegraph, width=1200, height=300 * dim(draws)[2])
+ggplot(membership_location) + 
+  # geom_sf(fill = 'lightgray', color = 'darkblue', size = 0.2)+
+  geom_point(data = membership_location, mapping = aes(x = 경도, y = 위도, color = group_24, size= 1))+
+  geom_text(data = membership_location, 
+            mapping = aes(x = 경도, y = 위도, label = 시군구), 
+            size = 2.5, vjust = -0.5) +  # vjust는 텍스트 위치 조정
+  theme_minimal()
+dev.off()

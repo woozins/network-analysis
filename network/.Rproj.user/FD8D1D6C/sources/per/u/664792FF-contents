@@ -1,0 +1,55 @@
+membership_location
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+labeled <- read_csv('young_labeling.csv')
+labeled
+membership_location[,c(1,8,9)]
+
+
+
+# 
+# labeled<- labeled %>% mutate(across(everything(), ~ recode(.x,
+#                                                    "A" = "동남권",
+#                                                    "B" = "서남권",
+#                                                    "C" = "동북권",
+#                                                    "D" = "서북권",
+#                                                    "E" = "도심권")))
+
+
+data <- left_join(labeled, membership_location[,c(1,8,9)], by ='구')
+
+
+ggplot() +
+  geom_sf(data = seoul_sf, fill = "lightgray", color = 'lightgray') +
+  geom_point(data = data, mapping = aes(x = 경도, y = 위도, color = group_2024, size= 1))+
+  geom_text(data = data, mapping = aes(x = 경도, y = 위도, label = 구), size = 2.5, vjust = -1.5)+
+  labs(title = "2024년 서울 구 네트워크 군집 결과") +
+  theme_minimal()
+
+
+install.packages('extraDistr')
+library(extraDistr)
+r <- 30
+p <- 0.036
+a <- 50
+b <- 1600
+
+samples <- rtnbinom(n = 10000, size = r, prob = p, a = a, b = b)
+
+
+
+
+qnbinom(c(0.025, 0.975), size = 2, prob = 0.0055)
+
+hist(rnbinom(1000, 2, 0.0055))
+
+
+
+y <- 0:1600
+pmf <- dnbinom(y,2, 0.0055)
+sum(y*pmf) / sum(pmf)
+
+2*(1-0.0055)/0.0055
+version
